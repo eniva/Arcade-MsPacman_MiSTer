@@ -72,6 +72,10 @@ generic (
     dipsw_reg             : in  std_logic_vector(7 downto 0);
 
     --
+    dn_addr    : in  std_logic_vector(15 downto 0);
+    dn_data    : in  std_logic_vector(7 downto 0);
+    dn_wr      : in  std_logic;
+    --
     RESET                 : in    std_logic;
 	 CLK      				  : in    std_logic;
     ENA_6   		        : in  std_logic
@@ -540,15 +544,15 @@ begin
 	u_rams : work.dpram generic map (12,8)
 	port map
 	(
-		clk_a_i  => clk,
-		en_a_i   => ena_6,
-		we_i     => not sync_bus_r_w_l and not vram_l,
-		addr_a_i => ab(11 downto 0),
-		data_a_i => cpu_data_out, -- cpu only source of ram data
+		clock_a   => clk,
+		enable_a  => ena_6,
+		wren_a    => not sync_bus_r_w_l and not vram_l,
+		address_a => ab(11 downto 0),
+		data_a    => cpu_data_out, -- cpu only source of ram data
 		
-		clk_b_i  => clk,
-		addr_b_i => ab(11 downto 0),
-		data_b_o => rams_data_out
+		clock_b   => clk,
+		address_b => ab(11 downto 0),
+		q_b       => rams_data_out
 	);
 	
 	u_program_rom: work.rom_descrambler
@@ -560,7 +564,10 @@ begin
 		CLK      => clk,
 		cpu_m1_l => cpu_m1_l, 
 		addr     => cpu_addr,
-		data     => rom_data 
+		data     => rom_data,
+		dn_addr  => dn_addr,
+		dn_data  => dn_data,
+		dn_wr    => dn_wr
 	);
 	
   --
@@ -581,6 +588,10 @@ begin
       I_VBLANK      => vblank,
       I_FLIP        => control_reg(3),
       I_WR2_L       => wr2_l,
+      --
+      dn_addr   => dn_addr,
+      dn_data   => dn_data,
+      dn_wr     => dn_wr,
       --
       O_RED         => O_VIDEO_R,
       O_GREEN       => O_VIDEO_G,

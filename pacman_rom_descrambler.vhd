@@ -237,7 +237,11 @@ entity rom_descrambler is
 		CLK      : in  std_logic;
 		cpu_m1_l : in  std_logic;
 		addr     : in  std_logic_vector(15 downto 0);
-		data     : out std_logic_vector( 7 downto 0)
+		data     : out std_logic_vector( 7 downto 0);
+
+		dn_addr  : in  std_logic_vector(15 downto 0);
+		dn_data  : in  std_logic_vector(7 downto 0);
+		dn_wr    : in  std_logic
 	);
 
 end rom_descrambler;
@@ -250,22 +254,37 @@ architecture rtl of rom_descrambler is
 	signal rom_hi       : std_logic_vector( 7 downto 0);
 	signal rom_data_in  : std_logic_vector( 7 downto 0);
 	signal rom_data_out : std_logic_vector( 7 downto 0);
+	signal rom0_cs,rom1_cs  : std_logic;
 begin
-	-- ROM at 0000 - 3FFF
-	u_program_rom0 : entity work.ROM_PGM_0
-	port map (
-		CLK         => CLK,
-		ADDR        => rom_addr(13 downto 0),
-		DATA        => rom_lo
-	);
 
-	-- ROM at 8000 - BFFF (Liz Wiz)
-	u_program_rom1 : entity work.ROM_PGM_1
-	port map (
-		CLK         => CLK,
-		ADDR        => rom_addr(13 downto 0),
-		DATA        => rom_hi
-	);
+	rom0_cs <= '1' when dn_addr(15 downto 14) = "00" else '0';
+	rom1_cs <= '1' when dn_addr(15 downto 14) = "01" else '0';
+
+	u_program_rom0 : work.dpram generic map (14,8)
+	port map
+	(
+		clock_a   => clk,
+		wren_a    => dn_wr and rom0_cs,
+		address_a => dn_addr(13 downto 0),
+		data_a    => dn_data,
+	
+		clock_b   => clk,
+		address_b => rom_addr(13 downto 0),
+		q_b       => rom_lo
+   );
+
+	u_program_rom1 : work.dpram generic map (14,8)
+	port map
+	(
+		clock_a   => clk,
+		wren_a    => dn_wr and rom1_cs,
+		address_a => dn_addr(13 downto 0),
+		data_a    => dn_data,
+	
+		clock_b   => clk,
+		address_b => rom_addr(13 downto 0),
+		q_b       => rom_hi
+   );
 
 --  The trap regions are 8 bytes in length starting on the following addresses:
 --
