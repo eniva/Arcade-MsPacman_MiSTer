@@ -90,10 +90,14 @@ localparam CONF_STR = {
 	"-;",
 	"O1,Aspect Ratio,Original,Wide;",
 	"O2,Orientation,Vert,Horz;",
-	"O34,Scanlines(vert),No,25%,50%,75%;",
+	"O35,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%;",  
 	"-;",
-	"T6,Reset;",
-	"J,Start 1P,Start 2P;",
+	"O89,Lives,3,5,1,2;",
+	"OAB,Bonus,10000,15000,20000,None;",
+	"OC,Cabinet,Upright,Cocktail;",
+	"-;",
+	"R0,Reset;",
+	"J1,Start 1P,Start 2P;",
 	"V,v2.00.",`BUILD_DATE
 };
 
@@ -122,6 +126,7 @@ end
 
 wire [31:0] status;
 wire  [1:0] buttons;
+wire        forced_scandoubler;
 
 wire        ioctl_download;
 wire        ioctl_wr;
@@ -142,6 +147,7 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 
 	.buttons(buttons),
 	.status(status),
+	.forced_scandoubler(forced_scandoubler),
 
 	.ioctl_download(ioctl_download),
 	.ioctl_wr(ioctl_wr),
@@ -172,6 +178,7 @@ always @(posedge clk_sys) begin
 			'h006: btn_two_players <= pressed; // F2
 
 			'h003: btn_cheat       <= pressed; // F5
+			
 		endcase
 	end
 end
@@ -198,43 +205,66 @@ wire m_coin   = m_start1 | m_start2;
 wire hblank, vblank;
 wire ce_vid = ce_6m;
 wire hs, vs;
-wire rde, rhs, rvs;
-wire [2:0] r,g,rr,rg;
-wire [1:0] b,rb;
+wire [2:0] r,g;
+wire [1:0] b;
 
-assign VGA_CLK  = clk_sys;
-assign VGA_CE   = ce_vid;
-assign VGA_R    = {r,r,r[2:1]};
-assign VGA_G    = {g,g,g[2:1]};
-assign VGA_B    = {b,b,b,b};
-assign VGA_DE   = ~(hblank | vblank);
-assign VGA_HS   = hs;
-assign VGA_VS   = vs;
-
-assign HDMI_CLK = VGA_CLK;
-assign HDMI_CE  = status[2] ? VGA_CE : 1'b1;
-assign HDMI_R   = status[2] ? VGA_R  : {rr,rr,rr[2:1]};
-assign HDMI_G   = status[2] ? VGA_G  : {rg,rg,rg[2:1]};
-assign HDMI_B   = status[2] ? VGA_B  : {rb,rb,rb,rb};
-assign HDMI_DE  = status[2] ? VGA_DE : rde;
-assign HDMI_HS  = status[2] ? VGA_HS : rhs;
-assign HDMI_VS  = status[2] ? VGA_VS : rvs;
-assign HDMI_SL  = status[2] ? 2'd0   : status[4:3];
-
-screen_rotate #(296,224,8) screen_rotate
+arcade_rotate_fx #(296,224,8) arcade_video
 (
-	.clk_in(clk_sys),
-	.ce_in(ce_vid),
-	.video_in({r,g,b}),
-	.hblank(hblank),
-	.vblank(vblank),
+	.*,
 
-	.clk_out(clk_sys),
-	.video_out({rr,rg,rb}),
-	.hsync(rhs),
-	.vsync(rvs),
-	.de(rde)
+	.clk_video(clk_sys),
+	.ce_pix(ce_vid),
+
+	.RGB_in({r,g,b}),
+	.HBlank(hblank),
+	.VBlank(vblank),
+	.HSync(hs),
+	.VSync(vs),
+	
+	.fx(status[5:3]),
+	.no_rotate(status[2])
 );
+
+
+/*
+https://www.arcade-museum.com/dipswi			// MAME KEYS
+			
+			'h016: btn_1p_start <= ~pressed;	// 1
+			'h01E: btn_2p_start <= ~pressed;	// 2
+			'h02E: coin1 <= pressed;			// 5
+			'h036: coin2 <= pressed;			// 6
+tch-settings/8782.html
+       2) Auto. Rack Advance can be attached to a button.  This will
+          allow you to skip a level at the push of a button.
+       3) Freeze Video can be connected to a switch.  This will
+          allow you to pause the game at the push of a button.
+
+---------------------------------------------------------------------------
+Option                    | SW1 | SW2 | SW3 | SW4 | SW5 | SW6 | SW7 | SW8 |
+--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+Free Play                 | ON  | ON  |     |     |     |     |     |     |
+1 Coin   1 Credit         | OFF | ON  |     |     |     |     |     |     |
+1 Coin   2 Credits        | ON  | OFF |     |     |     |     |     |     |
+2 Coins  1 Credit         | OFF | OFF |     |     |     |     |     |     |
+--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+1 Ms. Pac-Man Per Game    |     |     | ON  | ON  |     |     |     |     |
+2 Ms. Pac-Man Per Game    |     |     | OFF | ON  |     |     |     |     |
+3 Ms. Pac-Man Per Game    |     |     | ON  | OFF |     |     |     |     |
+5 Ms. Pac-Man Per Game    |     |     | OFF | OFF |     |     |     |     |
+--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+Bonus Player @ 10000 Pts  |     |     |     |     | ON  | ON  |     |     |
+Bonus Player @ 15000 Pts  |     |     |     |     | OFF | ON  |     |     |
+Bonus Player @ 20000 Pts  |     |     |     |     | ON  | OFF |     |     |
+No Bonus Players          |     |     |     |     | OFF | OFF |     |     |
+--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+Auto. Rack Advance (Skip) |     |     |     |     |     |     | ON  |     |
+Normal                    |     |     |     |     |     |     | OFF |     |
+--------------------------|-----|-----|-----|-----|-----|-----|-----|-----|
+Freeze Video (Pause)      |     |     |     |     |     |     |     | ON  |
+Normal                    |     |     |     |     |     |     |     | OFF |
+---------------------------------------------------------------------------
+*/
+wire [7:0]m_dip = {1'b0 , 1'b1,status[11:10],~status[9],status[8],1'b0,1'b1};
 
 wire [7:0] audio;
 assign AUDIO_L = {audio, audio};
@@ -258,11 +288,11 @@ pacman mspacman
 	.O_AUDIO(audio),
 
 	.in0_reg(~{2'b00, m_coin, btn_cheat, m_down,m_right,m_left,m_up}),
-	.in1_reg(~{1'b0, m_start2, m_start1, 5'b00000}),
+	.in1_reg(~{status[12], m_start2, m_start1,1'b0,m_down,m_right,m_left,m_up}),
 
-	.dipsw_reg(8'b0_1_00_11_01),
+	.dipsw_reg(m_dip),
 
-	.RESET(RESET | status[0] | status[6] | buttons[1]),
+	.RESET(RESET | status[0]| buttons[1]),
 	.CLK(clk_sys),
 	.ENA_6(ce_6m)
 );
