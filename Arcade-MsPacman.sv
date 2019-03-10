@@ -317,7 +317,7 @@ pacman mspacman
 
 	.dipsw_reg(m_dip),
 
-	.RESET(RESET | status[0]| buttons[1]),
+	.RESET(RESET | status[0]| buttons[1]| ioctl_download),
 	.CLK(clk_sys),
 	.ENA_6(ce_6m)
 );
