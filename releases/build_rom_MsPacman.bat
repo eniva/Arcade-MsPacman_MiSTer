@@ -1,7 +1,8 @@
 @echo off
 
 set    zip=mspacmab.zip
-set ifiles=pacman.6e+pacman.6f+pacman.6h+pacman.6j+u5+u5+u6+u7+u7+5e+5f
+set ifiles=pacman.6e+pacman.6f+pacman.6h+pacman.6j+u5+u5+u6+u7+u7+5e+5f+5f+5f+82s126.1m+82s126.4a+82s126.3m+82s123.7f)
+
 set  ofile=a.mspcmn.rom
 
 rem =====================================
