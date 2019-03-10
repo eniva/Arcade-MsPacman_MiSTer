@@ -99,7 +99,7 @@ localparam CONF_STR = {
 	"-;",
 	"R0,Reset;",
 	"J1,Start 1P,Start 2P;",
-	"V,",`BUILD_DATE
+	"V,v",`BUILD_DATE
 };
 
 ////////////////////   CLOCKS   ///////////////////
