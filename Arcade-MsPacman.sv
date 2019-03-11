@@ -87,6 +87,7 @@ assign HDMI_ARY = status[1] ? 8'd9  : status[2] ? 8'd3 : 8'd1;
 `include "build_id.v" 
 localparam CONF_STR = {
 	"A.MSPCMN;;",
+	"F,rom;", // allow loading of alternate ROMs
 	"-;",
 	"O1,Aspect Ratio,Original,Wide;",
 	"O2,Orientation,Vert,Horz;",
@@ -178,6 +179,17 @@ always @(posedge clk_sys) begin
 			'h006: btn_two_players <= pressed; // F2
 
 			'h003: btn_cheat       <= pressed; // F5
+
+			// JPAC/IPAC/MAME Style Codes
+			'h016: btn_start_1     <= pressed; // 1
+			'h01E: btn_start_2     <= pressed; // 2
+			'h02E: btn_coin_1      <= pressed; // 5
+			'h036: btn_coin_2      <= pressed; // 6
+			'h02D: btn_up_2        <= pressed; // R
+			'h02B: btn_down_2      <= pressed; // F
+			'h023: btn_left_2      <= pressed; // D
+			'h034: btn_right_2     <= pressed; // G
+			'h01C: btn_fire_2      <= pressed; // A
 			
 		endcase
 	end
@@ -192,15 +204,34 @@ reg btn_one_player  = 0;
 reg btn_two_players = 0;
 reg btn_cheat = 0;
 
+reg btn_start_1=0;
+reg btn_start_2=0;
+reg btn_coin_1=0;
+reg btn_coin_2=0;
+reg btn_up_2=0;
+reg btn_down_2=0;
+reg btn_left_2=0;
+reg btn_right_2=0;
+reg btn_fire_2=0;
+
 wire m_up     = status[2] ? btn_left  | joy[1] : btn_up    | joy[3];
 wire m_down   = status[2] ? btn_right | joy[0] : btn_down  | joy[2];
 wire m_left   = status[2] ? btn_down  | joy[2] : btn_left  | joy[1];
 wire m_right  = status[2] ? btn_up    | joy[3] : btn_right | joy[0];
 wire m_fire   = btn_fire;
 
-wire m_start1 = btn_one_player  | joy[4];
-wire m_start2 = btn_two_players | joy[5];
+wire m_up_2     = status[2] ? btn_left_2  | joy[1] : btn_up_2    | joy[3];
+wire m_down_2   = status[2] ? btn_right_2 | joy[0] : btn_down_2  | joy[2];
+wire m_left_2   = status[2] ? btn_down_2  | joy[2] : btn_left_2  | joy[1];
+wire m_right_2  = status[2] ? btn_up_2    | joy[3] : btn_right_2 | joy[0];
+wire m_fire_2  = btn_fire_2;
+
+
+wire m_start1 = btn_one_player  | joy[4] | btn_start_1;
+wire m_start2 = btn_two_players | joy[5] | btn_start_2;
 wire m_coin   = m_start1 | m_start2;
+
+
 
 wire hblank, vblank;
 wire ce_vid = ce_6m;
@@ -227,13 +258,7 @@ arcade_rotate_fx #(296,224,8) arcade_video
 
 
 /*
-https://www.arcade-museum.com/dipswi			// MAME KEYS
-			
-			'h016: btn_1p_start <= ~pressed;	// 1
-			'h01E: btn_2p_start <= ~pressed;	// 2
-			'h02E: coin1 <= pressed;			// 5
-			'h036: coin2 <= pressed;			// 6
-tch-settings/8782.html
+https://www.arcade-museum.com/dipswitch-settings/8782.html
        2) Auto. Rack Advance can be attached to a button.  This will
           allow you to skip a level at the push of a button.
        3) Freeze Video can be connected to a switch.  This will
@@ -287,12 +312,12 @@ pacman mspacman
 
 	.O_AUDIO(audio),
 
-	.in0_reg(~{2'b00, m_coin, btn_cheat, m_down,m_right,m_left,m_up}),
-	.in1_reg(~{status[12], m_start2, m_start1,1'b0,m_down,m_right,m_left,m_up}),
+	.in0_reg(~{2'b00,btn_coin_1, m_coin|btn_coin_2, btn_cheat, m_down,m_right,m_left,m_up}),
+	.in1_reg(~{status[12], m_start2, m_start1,1'b0,m_down_2,m_right_2,m_left_2,m_up_2}),
 
 	.dipsw_reg(m_dip),
 
-	.RESET(RESET | status[0]| buttons[1]),
+	.RESET(RESET | status[0]| buttons[1]| ioctl_download),
 	.CLK(clk_sys),
 	.ENA_6(ce_6m)
 );
