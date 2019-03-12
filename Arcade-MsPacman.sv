@@ -227,8 +227,8 @@ wire m_right_2  = status[2] ? btn_up_2    | joy[3] : btn_right_2 | joy[0];
 wire m_fire_2  = btn_fire_2;
 
 
-wire m_start1 = btn_one_player  | joy[4] | btn_start_1;
-wire m_start2 = btn_two_players | joy[5] | btn_start_2;
+wire m_start1 = btn_one_player  | joy[4];
+wire m_start2 = btn_two_players | joy[5];
 wire m_coin   = m_start1 | m_start2;
 
 
@@ -313,7 +313,7 @@ pacman mspacman
 	.O_AUDIO(audio),
 
 	.in0_reg(~{2'b00,btn_coin_1, m_coin|btn_coin_2, btn_cheat, m_down,m_right,m_left,m_up}),
-	.in1_reg(~{status[12], m_start2, m_start1,1'b0,m_down_2,m_right_2,m_left_2,m_up_2}),
+	.in1_reg(~{status[12], m_start2|btn_start_2, m_start1|btn_start_1,1'b0,m_down_2,m_right_2,m_left_2,m_up_2}),
 
 	.dipsw_reg(m_dip),
 
