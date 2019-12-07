@@ -97,8 +97,6 @@ localparam CONF_STR = {
 	"OAB,Bonus,10000,15000,20000,None;",
 	"OC,Cabinet,Upright,Cocktail;",
 	"-;",
-	"ODG,Diagonal,Default,Change Direction,Keep Direction,Vertical,Horizontal,Stop;",
-	"-;",
 	"R0,Reset;",
 	"J1,Start 1P,Start 2P;",
 	"V,v",`BUILD_DATE
@@ -234,7 +232,7 @@ enhanced4wayjoy dirinput
 		status[2] ? btn_up    | joy[3] : btn_right | joy[0]
 	},
 	{m_up,m_down,m_left,m_right},
-	status[16:13]
+	MODE_PREDCTION
 );
 
 wire m_up_2,m_down_2,m_left_2,m_right_2;
@@ -248,7 +246,7 @@ enhanced4wayjoy dirinput_2
 		status[2] ? btn_up_2    | joy[3] : btn_right_2 | joy[0]
 	},
 	{m_up_2,m_down_2,m_left_2,m_right_2},
-	status[16:13]
+	MODE_PREDCTION
 );
 
 
