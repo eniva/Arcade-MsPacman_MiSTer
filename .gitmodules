@@ -1,0 +1,3 @@
+[submodule "fpga-controls"]
+	path = fpga-controls
+	url = https://github.com/eniva/fpga-controls
